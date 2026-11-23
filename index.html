@@ -101,7 +101,7 @@
 </div>
 
 <!-- ===== Header ===== -->
-<header class="max-w-5xl mx-auto px-4 pt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+<header class="relative max-w-5xl mx-auto px-4 pt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
   <h1 class="min-w-0 truncate text-xl sm:text-2xl font-extrabold tracking-tight">Focus<span class="text-indigo-500">Forge</span> &amp; Flow</h1>
   <div class="flex min-w-0 flex-wrap items-center gap-2 relative">
     <span id="authUserChip" class="hidden min-w-0 items-center gap-2 rounded-full bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700 pl-3 pr-1 py-1 text-sm font-medium">
@@ -110,8 +110,8 @@
     </span>
     <button id="bellBtn" class="relative shrink-0 rounded-full w-9 h-9 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Reminders"><span id="bellIcon" class="inline-block">🔔</span><span id="bellBadge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-600 text-white text-xs font-bold leading-5"></span></button>
     <button id="themeBtn" class="shrink-0 rounded-full w-9 h-9 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Toggle theme">🌙</button>
-    <div id="bellPanel" class="hidden absolute right-0 top-12 z-50 w-[min(22rem,88vw)] max-h-[70vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-4"></div>
   </div>
+  <div id="bellPanel" class="hidden absolute right-4 top-full mt-2 z-50 w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-4"></div>
 </header>
 
 <!-- ===== Tab navigation ===== -->
