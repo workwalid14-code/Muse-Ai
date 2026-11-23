@@ -20,39 +20,78 @@
   .pop { animation: pop .8s ease 3; }
   #ring { transition: stroke-dashoffset .25s linear; }
   body.auth-locked > *:not(#authGate) { display: none !important; }
+  #tabs { scrollbar-width: none; }
+  #tabs::-webkit-scrollbar { display: none; }
 </style>
 </head>
 <body class="auth-locked min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors">
 
-<!-- ===== Firebase Auth Gate ===== -->
-<div id="authGate" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
-  <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
-    <h2 class="text-2xl font-extrabold tracking-tight text-center">Focus<span class="text-indigo-500">Forge</span> Flow</h2>
-    <p class="mt-1 text-center text-sm text-slate-500 dark:text-slate-400">Sign in to continue</p>
-    <p id="authStatus" class="mt-2 text-center text-sm text-indigo-600 dark:text-indigo-400"></p>
-    <button id="googleBtn" type="button" class="mt-6 w-full flex items-center justify-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+<!-- ===== Firebase Auth Gate / Home ===== -->
+<div id="authGate" class="fixed inset-0 z-[100] overflow-y-auto bg-slate-50 dark:bg-slate-950">
+  <div class="min-h-full w-full flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+    <div class="w-full max-w-5xl">
+      <div class="text-center">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Focus<span class="text-indigo-500">Forge</span> Flow</h1>
+        <p class="mt-2 text-sm sm:text-base font-semibold tracking-wide text-indigo-600 dark:text-indigo-400">Plan. Focus. Achieve.</p>
+      </div>
+      <div class="mt-8 grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div class="text-center lg:text-left">
+          <h2 class="text-xl sm:text-2xl font-bold leading-snug">Your study planner for admission prep.</h2>
+          <p class="mt-3 text-sm sm:text-base leading-relaxed text-slate-500 dark:text-slate-400">Plan your exams, track your targets, focus with a timer and keep your to-dos in one place — saved to your account, on every device.</p>
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+<div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+              <div class="text-2xl" aria-hidden="true">📅</div>
+              <p class="mt-2 text-sm font-semibold">Planner</p>
+              <p class="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Exam calendar with all your model tests and dates.</p>
+            </div>
+<div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+              <div class="text-2xl" aria-hidden="true">🎯</div>
+              <p class="mt-2 text-sm font-semibold">Targets</p>
+              <p class="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Set goals and track your progress every day.</p>
+            </div>
+<div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+              <div class="text-2xl" aria-hidden="true">⏱️</div>
+              <p class="mt-2 text-sm font-semibold">Focus Timer</p>
+              <p class="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Stay on task with a built-in focus timer.</p>
+            </div>
+<div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+              <div class="text-2xl" aria-hidden="true">☁️</div>
+              <p class="mt-2 text-sm font-semibold">Cloud Sync</p>
+              <p class="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Your data follows you on every device.</p>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-sm mx-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8">
+          <h2 class="text-xl font-extrabold tracking-tight text-center">Welcome back</h2>
+          <p class="mt-1 text-center text-sm text-slate-500 dark:text-slate-400">Sign in to continue</p>
+          <p id="authStatus" class="mt-2 text-center text-sm text-indigo-600 dark:text-indigo-400"></p>
+<button id="googleBtn" type="button" class="mt-6 w-full flex items-center justify-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700">
       <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 7.2 6.3 14.7z"/><path fill="#34A853" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 40.3 16.2 44 24 44z"/><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.6 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
       Continue with Google
     </button>
-    <div class="my-5 flex items-center gap-3">
+<div class="my-5 flex items-center gap-3">
       <span class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></span>
       <span class="text-xs text-slate-400">or</span>
       <span class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></span>
     </div>
-    <form id="authForm" class="space-y-3">
+<form id="authForm" class="space-y-3">
       <input id="authEmail" type="email" required placeholder="Email" autocomplete="email" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
       <input id="authPassword" type="password" required minlength="6" placeholder="Password" autocomplete="current-password" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
       <p class="text-xs text-slate-400">Password must be at least 6 characters.</p>
       <p id="authError" class="hidden text-sm text-red-600 dark:text-red-400"></p>
       <button id="authSubmitBtn" type="submit" class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2.5 text-sm">Sign in</button>
     </form>
-    <p class="mt-4 text-center text-sm">
+<p class="mt-4 text-center text-sm">
       <button id="authForgot" type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline">Forgot password?</button>
     </p>
     <p class="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
       <span id="authToggleText">New here?</span>
       <button id="authToggle" type="button" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Create account</button>
     </p>
+        </div>
+      </div>
+      <p class="mt-8 text-center text-xs text-slate-400">Your data is private — only you can see it.</p>
+    </div>
   </div>
 </div>
 
@@ -62,27 +101,27 @@
 </div>
 
 <!-- ===== Header ===== -->
-<header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between">
-  <h1 class="text-2xl font-extrabold tracking-tight">Focus<span class="text-indigo-500">Forge</span> &amp; Flow</h1>
-  <div class="flex items-center gap-2 relative">
-    <span id="authUserChip" class="hidden items-center gap-2 rounded-full bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700 pl-3 pr-1 py-1 text-sm font-medium">
-      <span id="authUserEmail" class="max-w-[10rem] truncate"></span>
-      <button id="signOutBtn" type="button" class="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5">Sign out</button>
+<header class="max-w-5xl mx-auto px-4 pt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+  <h1 class="min-w-0 truncate text-xl sm:text-2xl font-extrabold tracking-tight">Focus<span class="text-indigo-500">Forge</span> &amp; Flow</h1>
+  <div class="flex min-w-0 flex-wrap items-center gap-2 relative">
+    <span id="authUserChip" class="hidden min-w-0 items-center gap-2 rounded-full bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700 pl-3 pr-1 py-1 text-sm font-medium">
+      <span id="authUserEmail" class="max-w-[92px] sm:max-w-[10rem] truncate"></span>
+      <button id="signOutBtn" type="button" class="shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] sm:text-xs font-semibold px-2 py-1 sm:px-3 sm:py-1.5">Sign out</button>
     </span>
-    <button id="bellBtn" class="relative rounded-full w-10 h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Reminders"><span id="bellIcon" class="inline-block">🔔</span><span id="bellBadge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-600 text-white text-xs font-bold leading-5"></span></button>
-    <button id="themeBtn" class="rounded-full w-10 h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Toggle theme">🌙</button>
+    <button id="bellBtn" class="relative shrink-0 rounded-full w-9 h-9 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Reminders"><span id="bellIcon" class="inline-block">🔔</span><span id="bellBadge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-600 text-white text-xs font-bold leading-5"></span></button>
+    <button id="themeBtn" class="shrink-0 rounded-full w-9 h-9 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700" aria-label="Toggle theme">🌙</button>
     <div id="bellPanel" class="hidden absolute right-0 top-12 z-50 w-[min(22rem,88vw)] max-h-[70vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-4"></div>
   </div>
 </header>
 
 <!-- ===== Tab navigation ===== -->
 <nav class="max-w-5xl mx-auto px-4 mt-5">
-  <div class="flex gap-1 p-1 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-x-auto" id="tabs">
-    <button data-tab="timer" class="tab flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">⏱ Timer</button>
-    <button data-tab="todo" class="tab flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">✅ To-Do</button>
-    <button data-tab="calendar" class="tab flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">📅 Planner</button>
-    <button data-tab="targets" class="tab flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">🎯 Targets</button>
-    <button data-tab="videos" class="tab flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">🎬 Videos</button>
+  <div class="flex flex-nowrap gap-1 p-1 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-x-auto" id="tabs">
+    <button data-tab="timer" class="tab flex-1 shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">⏱ Timer</button>
+    <button data-tab="todo" class="tab flex-1 shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">✅ To-Do</button>
+    <button data-tab="calendar" class="tab flex-1 shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">📅 Planner</button>
+    <button data-tab="targets" class="tab flex-1 shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">🎯 Targets</button>
+    <button data-tab="videos" class="tab flex-1 shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium">🎬 Videos</button>
   </div>
 </nav>
 
