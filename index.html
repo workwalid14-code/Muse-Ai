@@ -29,6 +29,7 @@
   <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
     <h2 class="text-2xl font-extrabold tracking-tight text-center">Focus<span class="text-indigo-500">Forge</span> Flow</h2>
     <p class="mt-1 text-center text-sm text-slate-500 dark:text-slate-400">Sign in to continue</p>
+    <p id="authStatus" class="mt-2 text-center text-sm text-indigo-600 dark:text-indigo-400"></p>
     <button id="googleBtn" type="button" class="mt-6 w-full flex items-center justify-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-100 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700">
       <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 7.2 6.3 14.7z"/><path fill="#34A853" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 40.3 16.2 44 24 44z"/><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.6 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
       Continue with Google
@@ -219,7 +220,7 @@
 const $ = (s) => document.querySelector(s);
 const esc = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
-const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} if (window.__ffCloudSync) { try { window.__ffCloudSync(); } catch (e) {} } };
 
 /* ================= Theme ================= */
 let dark = load('ffl_dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -772,6 +773,7 @@ setInterval(() => { // date rollover: yesterday's list is archived / moved to Du
 // ===== Firebase Auth (sign-in gate) =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyBVQDcKnaY8tFc6sdBxz1AmOGtKNLJW2_4", authDomain: "focusforge-flow.firebaseapp.com", projectId: "focusforge-flow", storageBucket: "focusforge-flow.firebasestorage.app", messagingSenderId: "665058552429", appId: "1:665058552429:web:0be02aab42c4e0859ced64" };
 
@@ -787,6 +789,7 @@ const authToggle = document.getElementById('authToggle');
 const authToggleText = document.getElementById('authToggleText');
 const googleBtn = document.getElementById('googleBtn');
 const authForgot = document.getElementById('authForgot');
+const authStatus = document.getElementById('authStatus');
 
 let auth;
 let mode = 'signin';
@@ -817,9 +820,95 @@ function friendlyError(err) {
 try {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+  const db = getFirestore(app);
 
-  onAuthStateChanged(auth, (user) => {
+  // ===== Cloud Firestore sync (one doc per user: users/{uid}/state/main) =====
+  // The app keeps all planner data in localStorage under these keys; the
+  // cloud doc stores the same keys with the exact strings localStorage holds.
+  const FF_KEYS = ['ffl_dark', 'ffl_due', 'ffl_hist', 'ffl_plans', 'ffl_presets', 'ffl_recent', 'ffl_targets', 'ffl_todos'];
+
+  function setAuthStatus(msg) {
+    if (authStatus) authStatus.textContent = msg || '';
+  }
+
+  // Push this device's local data to the cloud (full-state overwrite,
+  // last-write-wins). Never throws: failures stay silent and localStorage
+  // remains the source of truth on this device.
+  async function syncToCloud(user) {
+    if (!user) return;
+    try {
+      const data = {};
+      for (const k of FF_KEYS) {
+        const v = localStorage.getItem(k);
+        if (v !== null) data[k] = v;
+      }
+      await setDoc(doc(db, 'users', user.uid, 'state', 'main'), data);
+    } catch (e) {}
+  }
+
+  // Debounced cloud upload, scheduled after every local save.
+  let cloudTimer = null;
+  function scheduleCloudSync() {
+    if (!auth || !auth.currentUser) return;
+    if (cloudTimer) clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(() => { syncToCloud(auth.currentUser); }, 800);
+  }
+  window.__ffCloudSync = scheduleCloudSync;
+
+  // Re-apply downloaded cloud values to the app's in-memory state (declared
+  // in the page's main script; module code shares the global lexical scope)
+  // and re-render every view so the UI shows the cloud data.
+  function applyCloudState(data) {
+    const parsed = (key) => {
+      if (typeof data[key] !== 'string') return undefined;
+      try { return JSON.parse(data[key]); } catch (e) { return undefined; }
+    };
+    try { const v = parsed('ffl_dark'); if (v !== undefined) dark = v; } catch (e) {}
+    try { const v = parsed('ffl_presets'); if (v !== undefined) customs = v; } catch (e) {}
+    try { const v = parsed('ffl_plans'); if (v !== undefined) plans = v; } catch (e) {}
+    try { const v = parsed('ffl_targets'); if (v !== undefined) targets = v; } catch (e) {}
+    try { const v = parsed('ffl_recent'); if (v !== undefined) recent = v; } catch (e) {}
+    try { const v = parsed('ffl_todos'); if (v !== undefined) todos = v; } catch (e) {}
+    try { const v = parsed('ffl_hist'); if (v !== undefined) hist = v; } catch (e) {}
+    try { const v = parsed('ffl_due'); if (v !== undefined) due = v; } catch (e) {}
+    try { applyTheme(); } catch (e) {}
+    try { renderPresets(); } catch (e) {}
+    try { renderCal(); } catch (e) {}
+    try { renderTargets(); } catch (e) {}
+    try { renderRecent(); } catch (e) {}
+    try { renderTodos(); } catch (e) {}
+    try { renderPerf(); } catch (e) {}
+    try { renderDue(); } catch (e) {}
+    try { refreshBell(); } catch (e) {}
+    try { checkOverdue(); } catch (e) {}
+  }
+
+  // Pull the cloud copy on sign-in (before unlocking the UI). If no cloud
+  // doc exists yet, upload this device's local data instead. Never throws.
+  async function syncFromCloud(user) {
+    if (!user) return;
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid, 'state', 'main'));
+      if (snap.exists()) {
+        const data = snap.data() || {};
+        for (const k of FF_KEYS) {
+          if (typeof data[k] === 'string') {
+            try { localStorage.setItem(k, data[k]); } catch (e) {}
+          }
+        }
+        applyCloudState(data);
+      } else {
+        await syncToCloud(user);
+      }
+    } catch (e) {}
+  }
+
+
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
+      setAuthStatus('Loading your data\u2026');
+      try { await syncFromCloud(user); } catch (e) {}
+      setAuthStatus('');
       document.body.classList.remove('auth-locked');
       authGate.style.display = 'none';
       authUserChip.classList.remove('hidden');
