@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Featured Videos — FocusForge Flow</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config = { darkMode: 'class' };</script>
+<script>
+  // Match the app's theme (same ffl_dark setting as FocusForge Flow).
+  try { if (JSON.parse(localStorage.getItem('ffl_dark') ?? 'null') ?? window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark'); } catch (e) {}
+</script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors">
+<header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html#videos" class="shrink-0 w-9 h-9 rounded-full bg-white dark:bg-slate-800 shadow border border-slate-200 dark:border-slate-700 flex items-center justify-center text-lg" aria-label="Back to videos">←</a>
+    <div class="min-w-0 flex-1">
+      <h1 class="font-bold text-lg leading-tight truncate">📁 Featured videos</h1>
+      <p class="text-xs text-slate-500 truncate">My videos — FocusForge Flow</p>
+    </div>
+    <span id="featCount" class="text-xs text-slate-500 shrink-0"></span>
+  </div>
+</header>
+<main class="max-w-5xl mx-auto px-4 py-6">
+  <div id="featGrid" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+  <p id="featEmpty" class="hidden text-sm text-slate-500 text-center py-12">No featured videos yet.</p>
+  <p class="text-xs text-slate-500 mt-6 text-center">Tap a video to play it.</p>
+</main>
+<script src="featured-videos.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const VIDEOS = window.FEATURED_VIDEOS || [];
+let playing = null;
+function facade(v) {
+  return `<button onclick="playVideo('${v.id}')" class="group w-full h-full relative bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center text-white" aria-label="Play ${esc(v.title)}">
+    <span class="w-16 h-16 rounded-full bg-red-600 group-hover:bg-red-500 flex items-center justify-center shadow-lg"><svg viewBox="0 0 24 24" class="w-8 h-8" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+    <span class="absolute bottom-2 left-3 right-3 text-left text-xs opacity-80 truncate">${esc(v.title)}</span></button>`;
+}
+function cardHTML(v) {
+  return `
+  <article id="vc-${v.id}" class="min-w-0 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow border border-slate-200 dark:border-slate-800">
+    <div class="vbox aspect-video bg-black">${facade(v)}</div>
+    <div class="p-4">
+      <h3 class="font-bold">${esc(v.title)}</h3>
+      ${v.desc ? `<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${esc(v.desc)}</p>` : ''}
+      ${v.local ? '' : `<a class="text-sm text-indigo-600 dark:text-indigo-400 underline mt-2 inline-block" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=${v.id}">Open on YouTube ↗</a>`}
+    </div>
+  </article>`;
+}
+function vbox(id) { const el = document.getElementById('vc-' + id); return el ? el.querySelector('.vbox') : null; }
+function setFacade(id) { const v = VIDEOS.find(x => x.id === id); const box = vbox(id); if (v && box) box.innerHTML = facade(v); }
+function playVideo(id) {
+  const v = VIDEOS.find(x => x.id === id); if (!v) return;
+  if (playing && playing !== id) setFacade(playing);
+  const box = vbox(id); if (!box) return; box.innerHTML = '';
+  if (v.local) { const el = document.createElement('video'); el.controls = true; el.autoplay = true; el.playsInline = true; el.className = 'w-full h-full'; el.src = v.src || ''; box.appendChild(el); }
+  else box.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0" title="${esc(v.title)}" allow="autoplay; accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  playing = id;
+}
+$('#featGrid').innerHTML = VIDEOS.map(cardHTML).join('');
+$('#featCount').textContent = VIDEOS.length + (VIDEOS.length === 1 ? ' video' : ' videos');
+$('#featEmpty').classList.toggle('hidden', VIDEOS.length > 0);
+</script>
+</body>
+</html>
